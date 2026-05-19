@@ -4,11 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZeroTrace // Pure Mnemonic P2P Pipeline</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A"
-    />
+    <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -144,21 +140,13 @@
                 </button>
               </div>
             </div>
-
-            <div
-              id="qr-container"
-              class="hidden bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center justify-center gap-2"
-            >
-              <span
-                class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center"
-                >Scan with Lens for Instant Download</span
-              >
+            
+            <div id="qr-container" class="hidden bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center justify-center gap-2">
+              <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center">Scan with Lens for Instant Download</span>
               <div class="bg-white p-2 rounded-lg">
                 <canvas id="qr-canvas"></canvas>
               </div>
-              <span class="text-[9px] text-zinc-500 text-center mt-1"
-                >Zero-click secure automated handshake</span
-              >
+              <span class="text-[9px] text-zinc-500 text-center mt-1">Zero-click secure automated handshake</span>
             </div>
           </div>
         </div>
@@ -480,27 +468,22 @@
                   const completeWordToken = `${infoHashMnemonic} ${keyMnemonic}`;
 
                   // Reveal Mnemonic
-                  document.getElementById("generated-phrase").innerText =
-                    completeWordToken;
-                  document
-                    .getElementById("mnemonic-box")
-                    .classList.remove("hidden");
-
+                  document.getElementById("generated-phrase").innerText = completeWordToken;
+                  document.getElementById("mnemonic-box").classList.remove("hidden");
+                  
                   // Generate Secure Share Link & QR Code
                   const baseUrl = "https://blacktunnel.netlify.app/";
                   const shareableLink = `${baseUrl}?token=${encodeURIComponent(completeWordToken)}`;
-
+                  
                   new QRious({
-                    element: document.getElementById("qr-canvas"),
+                    element: document.getElementById('qr-canvas'),
                     value: shareableLink,
                     size: 150,
-                    background: "white",
-                    foreground: "black",
-                    level: "L",
+                    background: 'white',
+                    foreground: 'black',
+                    level: 'L'
                   });
-                  document
-                    .getElementById("qr-container")
-                    .classList.remove("hidden");
+                  document.getElementById('qr-container').classList.remove('hidden');
 
                   document.getElementById("file-details").innerText =
                     "Ready to stream. Awaiting remote handshake connection.";
@@ -571,9 +554,7 @@
               );
 
               wtClient.remove(infoHash);
-              document
-                .getElementById("receiver-status-card")
-                .classList.add("hidden");
+              document.getElementById("receiver-status-card").classList.add("hidden");
               fetchBtn.disabled = false;
               fetchBtn.innerText = "Initiate Handshake & Download";
             }, 25000);
@@ -597,25 +578,19 @@
 
               const updateInterval = setInterval(() => {
                 const progress = (torrent.progress * 100).toFixed(1);
-                document.getElementById("rx-progress").innerText =
-                  `${progress}%`;
-                document.getElementById("rx-progress-bar").style.width =
-                  `${progress}%`;
+                document.getElementById("rx-progress").innerText = `${progress}%`;
+                document.getElementById("rx-progress-bar").style.width = `${progress}%`;
                 document.getElementById("rx-speed").innerText =
                   `Down: ${(torrent.downloadSpeed / 1024 / 1024).toFixed(2)} MB/s`;
               }, 500);
 
               torrent.on("done", () => {
                 clearInterval(updateInterval);
-                document.getElementById("rx-progress").innerText =
-                  "Decrypting...";
+                document.getElementById("rx-progress").innerText = "Decrypting...";
 
                 torrent.files[0].getBlob(async (err, encryptedBlob) => {
                   if (err)
-                    return logMsg(
-                      `Decentralized extraction layer fault: ${err}`,
-                      "error",
-                    );
+                    return logMsg(`Decentralized extraction layer fault: ${err}`, "error");
 
                   try {
                     const fullBuffer = await encryptedBlob.arrayBuffer();
@@ -630,22 +605,11 @@
 
                     const view = new DataView(combinedBuffer);
                     const filenameLen = view.getUint32(0);
-                    const filenameBytes = new Uint8Array(
-                      combinedBuffer,
-                      4,
-                      filenameLen,
-                    );
-                    const originalFilename = new TextDecoder().decode(
-                      filenameBytes,
-                    );
+                    const filenameBytes = new Uint8Array(combinedBuffer, 4, filenameLen);
+                    const originalFilename = new TextDecoder().decode(filenameBytes);
 
-                    const fileBytes = new Uint8Array(
-                      combinedBuffer,
-                      4 + filenameLen,
-                    );
-                    const plainBlob = new Blob([fileBytes], {
-                      type: "application/octet-stream",
-                    });
+                    const fileBytes = new Uint8Array(combinedBuffer, 4 + filenameLen);
+                    const plainBlob = new Blob([fileBytes], { type: "application/octet-stream" });
 
                     const downloadUrl = URL.createObjectURL(plainBlob);
                     const a = document.createElement("a");
@@ -657,19 +621,13 @@
 
                     setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
                     document.getElementById("rx-progress").innerText = "Saved";
-                    logMsg(
-                      `File successfully reassembled and written as: ${originalFilename}`,
-                      "success",
-                    );
+                    logMsg(`File successfully reassembled and written as: ${originalFilename}`, "success");
 
                     fetchBtn.disabled = false;
                     fetchBtn.innerText = "Initiate Handshake & Download";
                     wtClient.remove(torrent.infoHash);
                   } catch (cryptoErr) {
-                    logMsg(
-                      "Decryption failed! The phrase dictionary parameters or token input index is mismatched.",
-                      "error",
-                    );
+                    logMsg("Decryption failed! The phrase dictionary parameters or token input index is mismatched.", "error");
                     document.getElementById("rx-progress").innerText = "Failed";
                     fetchBtn.disabled = false;
                     fetchBtn.innerText = "Initiate Handshake & Download";
@@ -684,51 +642,39 @@
           }
         });
 
-      // --- AUTOMATED SECURE HANDSHAKE (1-CLICK QR INTERCEPT) ---
-      window.addEventListener("DOMContentLoaded", () => {
+      // --- AUTOMATED SECURE HANDSHAKE (ZERO-CLICK QR INTERCEPT) ---
+      // FIX: Changed to 'load' to ensure WebTorrent and Ethers CDNs are fully initialized
+      window.addEventListener('load', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const tokenPhrase = urlParams.get("token");
+        const tokenPhrase = urlParams.get('token');
 
         if (tokenPhrase) {
-          // Security Check: Ensure exactly 27 words
           const words = tokenPhrase.trim().split(/\s+/);
-
+          
           if (words.length === 27) {
-            logMsg(
-              "Token intercepted from QR code. Awaiting manual handshake initiation.",
-              "success",
-            );
-
-            const inputBox = document.getElementById("input-phrase");
-            const fetchBtn = document.getElementById("btn-fetch");
+            logMsg("Intercepted secure token from URL routing.", "success");
+            
+            const inputBox = document.getElementById('input-phrase');
+            const fetchBtn = document.getElementById('btn-fetch');
 
             if (inputBox && fetchBtn) {
-              // 1. Auto-fill the text area
+              // 1. Populate the Node B Text Area
               inputBox.value = tokenPhrase;
-
-              // 2. UI Enhancement: Make the button pulse to show the user what to click next
-              fetchBtn.classList.add(
-                "ring-4",
-                "ring-purple-400",
-                "animate-pulse",
-              );
-
-              // Remove the pulse after a few seconds so it isn't annoying
+              
+              // FIX: Add an 800ms delay. 
+              // Browsers (like Google Lens) block immediate artificial clicks to prevent spam.
+              // This delay bypasses the block and allows WebRTC to prepare.
               setTimeout(() => {
-                fetchBtn.classList.remove("animate-pulse");
-              }, 3000);
-
-              // 3. SECURE CLEANUP: Strip the token from the browser URL bar instantly
-              // This keeps the UI clean and prevents accidental re-submissions if they refresh
-              const cleanUrl =
-                window.location.protocol +
-                "//" +
-                window.location.host +
-                window.location.pathname;
-              window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
+                  logMsg("Initiating automated P2P handshake...", "success");
+                  fetchBtn.click();
+              }, 800);
+              
+              // 3. SECURE CLEANUP: Strip the token from the browser bar instantly
+              const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+              window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
             }
           } else {
-            logMsg("QR token rejected: Invalid length or structure.", "error");
+            logMsg("URL token rejected: Invalid length or structure.", "error");
           }
         }
       });
