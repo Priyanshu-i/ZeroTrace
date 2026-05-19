@@ -4,10 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZeroTrace // Pure Mnemonic P2P Pipeline</title>
-    <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A">
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap");
 
@@ -114,28 +119,46 @@
             </p>
           </div>
 
-          <div id="mnemonic-box" class="hidden mt-6 space-y-2">
-            <label
-              class="text-xs font-semibold text-cyan-400 uppercase tracking-wider block"
-              >Access Token (Share with Node B)</label
-            >
+          <div id="mnemonic-box" class="hidden mt-6 space-y-4">
+            <div>
+              <label
+                class="text-xs font-semibold text-cyan-400 uppercase tracking-wider block mb-2"
+                >Access Token (Share with Node B)</label
+              >
+              <div
+                class="bg-zinc-950 border border-zinc-800 p-3 rounded-lg flex flex-col gap-3"
+              >
+                <span
+                  id="generated-phrase"
+                  class="text-xs leading-relaxed font-medium text-emerald-400 tracking-wide select-all bg-zinc-900 p-2.5 rounded border border-zinc-800 break-words"
+                ></span>
+                <button
+                  onclick="
+                    navigator.clipboard.writeText(
+                      document.getElementById('generated-phrase').innerText,
+                    )
+                  "
+                  class="w-full text-center text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1.5 rounded transition-all cursor-pointer"
+                >
+                  Copy Token
+                </button>
+              </div>
+            </div>
+
             <div
-              class="bg-zinc-950 border border-zinc-800 p-3 rounded-lg flex flex-col gap-3"
+              id="qr-container"
+              class="hidden bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center justify-center gap-2"
             >
               <span
-                id="generated-phrase"
-                class="text-xs leading-relaxed font-medium text-emerald-400 tracking-wide select-all bg-zinc-900 p-2.5 rounded border border-zinc-800"
-              ></span>
-              <button
-                onclick="
-                  navigator.clipboard.writeText(
-                    document.getElementById('generated-phrase').innerText,
-                  )
-                "
-                class="w-full text-center text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1.5 rounded transition-all cursor-pointer"
+                class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center"
+                >Scan with Lens for Instant Download</span
               >
-                Copy Token
-              </button>
+              <div class="bg-white p-2 rounded-lg">
+                <canvas id="qr-canvas"></canvas>
+              </div>
+              <span class="text-[9px] text-zinc-500 text-center mt-1"
+                >Zero-click secure automated handshake</span
+              >
             </div>
           </div>
         </div>
@@ -286,13 +309,11 @@
 
       // --- NODE A SENDER TRACKING DATA ---
       let peerCounter = 0;
-      const knownPeers = new Map(); // Keep track of each isolated peer mapping
+      const knownPeers = new Map();
 
       function processSenderUI(torrent) {
-        // Reset current active states to flag elements that drop off
         knownPeers.forEach((p) => (p.active = false));
 
-        // Map live transport wires
         torrent.wires.forEach((wire) => {
           const pId =
             wire.peerId || wire.remoteAddress || Math.random().toString();
@@ -319,7 +340,6 @@
               : wire.uploadSpeed || 0;
         });
 
-        // Repopulate isolated telemetry display rows
         const container = document.getElementById("sender-peers-list");
         container.innerHTML = "";
 
@@ -459,16 +479,33 @@
                     ethers.utils.entropyToMnemonic(infoHashBytes);
                   const completeWordToken = `${infoHashMnemonic} ${keyMnemonic}`;
 
+                  // Reveal Mnemonic
                   document.getElementById("generated-phrase").innerText =
                     completeWordToken;
                   document
                     .getElementById("mnemonic-box")
                     .classList.remove("hidden");
+
+                  // Generate Secure Share Link & QR Code
+                  const baseUrl = "https://blacktunnel.netlify.app/";
+                  const shareableLink = `${baseUrl}?token=${encodeURIComponent(completeWordToken)}`;
+
+                  new QRious({
+                    element: document.getElementById("qr-canvas"),
+                    value: shareableLink,
+                    size: 150,
+                    background: "white",
+                    foreground: "black",
+                    level: "L",
+                  });
+                  document
+                    .getElementById("qr-container")
+                    .classList.remove("hidden");
+
                   document.getElementById("file-details").innerText =
                     "Ready to stream. Awaiting remote handshake connection.";
                   logMsg(`P2P Engine seeding active via tracker grid.`);
 
-                  // Attach isolated wire monitoring handlers
                   torrent.on("upload", () => processSenderUI(torrent));
                   torrent.on("wire", (wire) => {
                     processSenderUI(torrent);
@@ -524,7 +561,6 @@
               "Locating channel connections matching token coordinates...",
             );
 
-            // 25-Second Connection Timeout Guard
             const handshakeTimeout = setTimeout(() => {
               logMsg(
                 "Handshake timeout: No active matching sender discovered or invalid token keyframe.",
@@ -534,9 +570,7 @@
                 "Handshake Failed!\n\nNo active sender found for this token configuration.\n\nPlease confirm:\n1. The sender still has their terminal interface open.\n2. The 27-word token sequence was parsed exactly.",
               );
 
-              // Unregister stalled tracker engine lookup parameters
               wtClient.remove(infoHash);
-
               document
                 .getElementById("receiver-status-card")
                 .classList.add("hidden");
@@ -545,7 +579,6 @@
             }, 25000);
 
             wtClient.add(infoHash, { announce: rtcTrackers }, (torrent) => {
-              // Callback triggers only when swarm metadata resolves successfully
               clearTimeout(handshakeTimeout);
               fetchBtn.innerText = "Downlinking Stream...";
               logMsg(
@@ -597,7 +630,6 @@
 
                     const view = new DataView(combinedBuffer);
                     const filenameLen = view.getUint32(0);
-
                     const filenameBytes = new Uint8Array(
                       combinedBuffer,
                       4,
@@ -651,6 +683,55 @@
             fetchBtn.innerText = "Initiate Handshake & Download";
           }
         });
+
+      // --- AUTOMATED SECURE HANDSHAKE (1-CLICK QR INTERCEPT) ---
+      window.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenPhrase = urlParams.get("token");
+
+        if (tokenPhrase) {
+          // Security Check: Ensure exactly 27 words
+          const words = tokenPhrase.trim().split(/\s+/);
+
+          if (words.length === 27) {
+            logMsg(
+              "Token intercepted from QR code. Awaiting manual handshake initiation.",
+              "success",
+            );
+
+            const inputBox = document.getElementById("input-phrase");
+            const fetchBtn = document.getElementById("btn-fetch");
+
+            if (inputBox && fetchBtn) {
+              // 1. Auto-fill the text area
+              inputBox.value = tokenPhrase;
+
+              // 2. UI Enhancement: Make the button pulse to show the user what to click next
+              fetchBtn.classList.add(
+                "ring-4",
+                "ring-purple-400",
+                "animate-pulse",
+              );
+
+              // Remove the pulse after a few seconds so it isn't annoying
+              setTimeout(() => {
+                fetchBtn.classList.remove("animate-pulse");
+              }, 3000);
+
+              // 3. SECURE CLEANUP: Strip the token from the browser URL bar instantly
+              // This keeps the UI clean and prevents accidental re-submissions if they refresh
+              const cleanUrl =
+                window.location.protocol +
+                "//" +
+                window.location.host +
+                window.location.pathname;
+              window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
+            }
+          } else {
+            logMsg("QR token rejected: Invalid length or structure.", "error");
+          }
+        }
+      });
     </script>
   </body>
 </html>
