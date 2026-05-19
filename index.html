@@ -4,11 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZeroTrace // Pure Mnemonic P2P Pipeline</title>
-    <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A">
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap");
 
@@ -47,13 +52,16 @@
         padding: 12px;
         box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.4);
       }
-      footer div:first-child {
-        font-size: 16px;
-        margin-bottom: 4px;
+
+      .tab-active {
+        background-color: #18181b;
+        border-color: #06b6d4;
+        color: #22d3ee;
       }
-      footer div:last-child {
-        font-size: 14px;
-        color: #a9d6e5;
+      .tab-inactive {
+        background-color: #09090b;
+        border-color: #27272a;
+        color: #a1a1aa;
       }
     </style>
   </head>
@@ -61,7 +69,7 @@
     class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col p-6 selection:bg-cyan-500 selection:text-black"
   >
     <header
-      class="max-w-5xl w-full mx-auto flex justify-between items-center border-b border-zinc-800 pb-4 mb-6"
+      class="max-w-5xl w-full mx-auto flex flex-col md:flex-row justify-between items-center border-b border-zinc-800 pb-4 mb-6 gap-4"
     >
       <div>
         <h1
@@ -70,17 +78,25 @@
           ZeroTrace
         </h1>
         <p class="text-xs text-zinc-500 mt-1">
-          Deterministic Ephemeral P2P Pipeline // Zero-Middleware
+          Deterministic Ephemeral P2P Pipeline
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <span
-          id="net-status-dot"
-          class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
-        ></span>
-        <span id="net-status" class="text-xs text-zinc-400"
-          >P2P Engine Ready</span
+
+      <div class="flex gap-2 text-xs font-medium">
+        <button
+          id="btn-mode-global"
+          onclick="switchMode('global')"
+          class="tab-active px-4 py-2 border rounded-md transition-all"
         >
+          🌍 Global Relay (Any Distance)
+        </button>
+        <button
+          id="btn-mode-local"
+          onclick="switchMode('local')"
+          class="tab-inactive px-4 py-2 border rounded-md transition-all"
+        >
+          📶 Offline Hotspot (Nearby 30-50m)
+        </button>
       </div>
     </header>
 
@@ -91,14 +107,16 @@
         class="border border-zinc-800 bg-zinc-900/40 rounded-xl p-6 flex flex-col justify-between shadow-xl backdrop-blur-sm"
       >
         <div>
-          <div class="flex items-center gap-2 mb-4">
-            <span
-              class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-cyan-950 text-cyan-400 rounded border border-cyan-800/50"
-              >Node A</span
-            >
-            <h2 class="text-md font-medium text-zinc-200">
-              Secure Dispatch Vault
-            </h2>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span
+                class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-cyan-950 text-cyan-400 rounded border border-cyan-800/50"
+                >Node A</span
+              >
+              <h2 class="text-md font-medium text-zinc-200">
+                Secure Dispatch Vault
+              </h2>
+            </div>
           </div>
 
           <div
@@ -115,38 +133,96 @@
             </p>
           </div>
 
-          <div id="mnemonic-box" class="hidden mt-6 space-y-4">
-            <div>
+          <div id="global-sender-ui" class="hidden mt-6 space-y-4">
+            <label
+              class="text-xs font-semibold text-cyan-400 uppercase tracking-wider block mb-2"
+              >Access Token (Share with Node B)</label
+            >
+            <div
+              class="bg-zinc-950 border border-zinc-800 p-3 rounded-lg flex flex-col gap-3"
+            >
+              <span
+                id="global-phrase"
+                class="text-xs leading-relaxed font-medium text-emerald-400 tracking-wide select-all bg-zinc-900 p-2.5 rounded border border-zinc-800 break-words"
+              ></span>
+              <button
+                onclick="
+                  navigator.clipboard.writeText(
+                    document.getElementById('global-phrase').innerText,
+                  )
+                "
+                class="w-full text-center text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1.5 rounded transition-all"
+              >
+                Copy Token
+              </button>
+            </div>
+            <div
+              id="global-qr-container"
+              class="hidden bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center justify-center gap-2"
+            >
+              <span
+                class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center"
+                >Scan with Lens for Instant Download</span
+              >
+              <div class="bg-white p-2 rounded-lg">
+                <canvas id="global-qr-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div id="local-sender-ui" class="hidden mt-6 space-y-4">
+            <div id="local-step-1" class="hidden">
               <label
                 class="text-xs font-semibold text-cyan-400 uppercase tracking-wider block mb-2"
-                >Access Token (Share with Node B)</label
+                >1. Scan Offer on Node B</label
               >
               <div
-                class="bg-zinc-950 border border-zinc-800 p-3 rounded-lg flex flex-col gap-3"
+                class="bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center gap-3"
               >
-                <span
-                  id="generated-phrase"
-                  class="text-xs leading-relaxed font-medium text-emerald-400 tracking-wide select-all bg-zinc-900 p-2.5 rounded border border-zinc-800 break-words"
-                ></span>
+                <div class="bg-white p-2 rounded-lg">
+                  <canvas id="local-offer-qr"></canvas>
+                </div>
+                <span class="text-[9px] text-zinc-500 text-center"
+                  >If camera fails, copy this dense token:</span
+                >
+                <textarea
+                  id="local-offer-text"
+                  rows="2"
+                  class="w-full text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 rounded p-2"
+                  readonly
+                ></textarea>
                 <button
                   onclick="
                     navigator.clipboard.writeText(
-                      document.getElementById('generated-phrase').innerText,
+                      document.getElementById('local-offer-text').value,
                     )
                   "
-                  class="w-full text-center text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-1.5 rounded transition-all cursor-pointer"
+                  class="text-xs bg-zinc-800 hover:bg-zinc-700 py-1 px-4 rounded w-full"
                 >
-                  Copy Token
+                  Copy Offer
                 </button>
               </div>
             </div>
-            
-            <div id="qr-container" class="hidden bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center justify-center gap-2">
-              <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-center">Scan with Lens for Instant Download</span>
-              <div class="bg-white p-2 rounded-lg">
-                <canvas id="qr-canvas"></canvas>
-              </div>
-              <span class="text-[9px] text-zinc-500 text-center mt-1">Zero-click secure automated handshake</span>
+            <div
+              id="local-step-2"
+              class="hidden mt-4 pt-4 border-t border-zinc-800"
+            >
+              <label
+                class="text-xs font-semibold text-emerald-400 uppercase tracking-wider block mb-2"
+                >2. Paste Answer from Node B</label
+              >
+              <textarea
+                id="local-answer-input"
+                rows="3"
+                placeholder="Paste the generated answer token here..."
+                class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs text-zinc-200"
+              ></textarea>
+              <button
+                id="btn-local-connect"
+                class="mt-2 w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium py-2 rounded"
+              >
+                Complete Connection
+              </button>
             </div>
           </div>
         </div>
@@ -156,7 +232,7 @@
           class="hidden mt-6 p-4 bg-zinc-950 border border-zinc-800 rounded-lg space-y-3"
         >
           <div class="flex justify-between items-center text-xs">
-            <span class="text-zinc-400">Swarm Status:</span>
+            <span class="text-zinc-400">Status:</span>
             <span
               id="sender-state"
               class="text-cyan-400 font-medium animate-pulse"
@@ -164,12 +240,13 @@
             >
           </div>
           <div
-            id="sender-peers-list"
-            class="space-y-2 border-t border-zinc-800/50 pt-2 max-h-40 overflow-y-auto"
+            id="sender-upload-progress"
+            class="hidden w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden"
           >
-            <div class="text-[11px] text-zinc-500">
-              Awaiting remote connection nodes...
-            </div>
+            <div
+              id="tx-progress-bar"
+              class="bg-cyan-500 h-full w-0 transition-all"
+            ></div>
           </div>
         </div>
       </section>
@@ -178,34 +255,89 @@
         class="border border-zinc-800 bg-zinc-900/40 rounded-xl p-6 flex flex-col justify-between shadow-xl backdrop-blur-sm"
       >
         <div>
-          <div class="flex items-center gap-2 mb-4">
-            <span
-              class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-purple-950 text-purple-400 rounded border border-purple-800/50"
-              >Node B</span
-            >
-            <h2 class="text-md font-medium text-zinc-200">
-              Secure Intercept Receiver
-            </h2>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span
+                class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-purple-950 text-purple-400 rounded border border-purple-800/50"
+                >Node B</span
+              >
+              <h2 class="text-md font-medium text-zinc-200">
+                Secure Intercept Receiver
+              </h2>
+            </div>
           </div>
 
-          <div class="space-y-3">
+          <div id="global-receiver-ui" class="space-y-3 hidden">
             <div>
               <label class="text-xs text-zinc-400 block mb-1"
                 >Enter 27-Word Access Token</label
               >
               <textarea
-                id="input-phrase"
+                id="global-input-phrase"
                 rows="4"
-                placeholder="Paste the 27 English words here without punctuation..."
-                class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs focus:outline-none focus:border-purple-500 text-zinc-200 tracking-wide placeholder-zinc-600 resize-none"
+                placeholder="Paste the 27 words here..."
+                class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs focus:outline-none focus:border-purple-500 text-zinc-200 resize-none"
               ></textarea>
             </div>
             <button
-              id="btn-fetch"
-              class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-medium p-3 rounded-lg transition-all cursor-pointer shadow-md shadow-purple-950/50"
+              id="btn-global-fetch"
+              class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white text-sm font-medium p-3 rounded-lg shadow-md"
             >
-              Initiate Handshake & Download
+              Initiate Download
             </button>
+          </div>
+
+          <div id="local-receiver-ui" class="space-y-4 hidden">
+            <div>
+              <label class="text-xs text-zinc-400 block mb-1"
+                >1. Paste Offer from Node A</label
+              >
+              <textarea
+                id="local-offer-input"
+                rows="3"
+                placeholder="Paste the dense Offer token..."
+                class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-xs focus:outline-none text-zinc-200"
+              ></textarea>
+              <button
+                id="btn-local-generate-answer"
+                class="mt-2 w-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs py-2 rounded border border-zinc-700"
+              >
+                Generate Answer
+              </button>
+            </div>
+
+            <div
+              id="local-rx-step-2"
+              class="hidden pt-4 border-t border-zinc-800"
+            >
+              <label
+                class="text-xs font-semibold text-purple-400 uppercase tracking-wider block mb-2"
+                >2. Scan Answer on Node A</label
+              >
+              <div
+                class="bg-zinc-950 border border-zinc-800 p-4 rounded-lg flex flex-col items-center gap-3"
+              >
+                <div class="bg-white p-2 rounded-lg">
+                  <canvas id="local-answer-qr"></canvas>
+                </div>
+                <textarea
+                  id="local-answer-text"
+                  rows="2"
+                  class="w-full text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 rounded p-2"
+                  readonly
+                ></textarea>
+                <button
+                  onclick="
+                    navigator.clipboard.writeText(
+                      document.getElementById('local-answer-text').value,
+                    )
+                  "
+                  class="text-xs bg-zinc-800 hover:bg-zinc-700 py-1 px-4 rounded w-full"
+                >
+                  Copy Answer
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -214,28 +346,21 @@
           class="hidden mt-6 p-4 bg-zinc-950 border border-zinc-800 rounded-lg space-y-3"
         >
           <div class="flex justify-between items-center text-xs">
-            <span class="text-zinc-400" id="rx-status-text"
-              >Download Progress:</span
-            >
+            <span class="text-zinc-400">Download Progress:</span>
             <span id="rx-progress" class="text-purple-400 font-bold">0%</span>
           </div>
           <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
             <div
               id="rx-progress-bar"
-              class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-0 transition-all duration-150"
+              class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-0 transition-all"
             ></div>
-          </div>
-          <div
-            class="flex justify-between items-center text-[11px] text-zinc-500"
-          >
-            <span id="rx-speed">Down: 0 MB/s</span>
           </div>
         </div>
       </section>
     </main>
 
     <section
-      class="max-w-5xl w-full mx-auto border border-zinc-800 bg-zinc-950 rounded-lg flex flex-col h-48 shadow-inner mb-6"
+      class="max-w-5xl w-full mx-auto border border-zinc-800 bg-zinc-950 rounded-lg flex flex-col h-40 shadow-inner mb-6"
     >
       <div
         class="bg-zinc-900 px-4 py-2 border-b border-zinc-800 flex justify-between items-center rounded-t-lg"
@@ -245,7 +370,7 @@
         >
         <button
           onclick="document.getElementById('debug-logs').innerHTML = ''"
-          class="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+          class="text-[10px] text-zinc-500 hover:text-zinc-300"
         >
           CLEAR
         </button>
@@ -255,36 +380,80 @@
         class="p-4 overflow-y-auto text-[11px] space-y-1 h-full font-mono text-zinc-400"
       ></div>
     </section>
-
     <footer>
-      <div>• Fast • Secure • P2P • No Central Server</div>
+      <div>• Fast • Secure • P2P • Zero Servers Offline Mode</div>
       <div>~ Made by Priyanshu Singh</div>
     </footer>
 
     <script>
-      const wtClient = new WebTorrent();
+      let currentMode = "global";
+      let wtClient = new WebTorrent();
       const rtcTrackers = [
         "wss://tracker.btorrent.xyz",
         "wss://tracker.openwebtorrent.com",
       ];
 
+      // Local WebRTC Variables
+      let localPeerConnection;
+      let localDataChannel;
+      let localEncryptedFileBuffer;
+      let localFilename;
+      let localCryptoKey;
+
       function logMsg(message, type = "info") {
         const container = document.getElementById("debug-logs");
         if (!container) return;
         const time = new Date().toLocaleTimeString("en-US", { hour12: false });
-        let colorClass = "text-zinc-400";
-        if (type === "success") colorClass = "text-emerald-400";
-        if (type === "error") colorClass = "text-red-400";
-        if (type === "warn") colorClass = "text-yellow-400";
-        const logEntry = document.createElement("div");
-        logEntry.innerHTML = `<span class="text-zinc-600">[${time}]</span> <span class="${colorClass}">${message}</span>`;
-        container.appendChild(logEntry);
+        let colorClass =
+          type === "success"
+            ? "text-emerald-400"
+            : type === "error"
+              ? "text-red-400"
+              : "text-zinc-400";
+        container.innerHTML += `<div><span class="text-zinc-600">[${time}]</span> <span class="${colorClass}">${message}</span></div>`;
         container.scrollTop = container.scrollHeight;
       }
 
-      logMsg("WebTorrent Initialized.", "success");
+      function switchMode(mode) {
+        currentMode = mode;
+        const globalBtn = document.getElementById("btn-mode-global");
+        const localBtn = document.getElementById("btn-mode-local");
 
-      // --- CRYPTO UTILS ---
+        if (mode === "global") {
+          globalBtn.className =
+            "tab-active px-4 py-2 border rounded-md transition-all";
+          localBtn.className =
+            "tab-inactive px-4 py-2 border rounded-md transition-all";
+          document
+            .getElementById("global-receiver-ui")
+            .classList.remove("hidden");
+          document.getElementById("local-receiver-ui").classList.add("hidden");
+          logMsg("Switched to Global Internet P2P Mode.", "success");
+        } else {
+          localBtn.className =
+            "tab-active px-4 py-2 border rounded-md transition-all";
+          globalBtn.className =
+            "tab-inactive px-4 py-2 border rounded-md transition-all";
+          document.getElementById("global-receiver-ui").classList.add("hidden");
+          document
+            .getElementById("local-receiver-ui")
+            .classList.remove("hidden");
+          logMsg(
+            "Switched to Offline Local Wi-Fi Mode. Disconnecting trackers.",
+            "warn",
+          );
+        }
+
+        // Reset UI
+        document.getElementById("local-sender-ui").classList.add("hidden");
+        document.getElementById("global-sender-ui").classList.add("hidden");
+        document.getElementById("sender-status-card").classList.add("hidden");
+        document.getElementById("receiver-status-card").classList.add("hidden");
+      }
+
+      // Init Default View
+      switchMode("global");
+
       async function deriveKeyFromBytes(bytes) {
         return await window.crypto.subtle.importKey(
           "raw",
@@ -295,102 +464,14 @@
         );
       }
 
-      // --- NODE A SENDER TRACKING DATA ---
-      let peerCounter = 0;
-      const knownPeers = new Map();
-
-      function processSenderUI(torrent) {
-        knownPeers.forEach((p) => (p.active = false));
-
-        torrent.wires.forEach((wire) => {
-          const pId =
-            wire.peerId || wire.remoteAddress || Math.random().toString();
-          if (!knownPeers.has(pId)) {
-            peerCounter++;
-            knownPeers.set(pId, {
-              name: `Peer ${peerCounter}`,
-              uploaded: 0,
-              speed: 0,
-              active: true,
-            });
-            logMsg(
-              `New matrix data channel link assigned: Peer ${peerCounter}`,
-              "success",
-            );
-          }
-
-          const targetPeer = knownPeers.get(pId);
-          targetPeer.active = true;
-          targetPeer.uploaded = wire.uploaded || 0;
-          targetPeer.speed =
-            typeof wire.uploadSpeed === "function"
-              ? wire.uploadSpeed()
-              : wire.uploadSpeed || 0;
-        });
-
-        const container = document.getElementById("sender-peers-list");
-        container.innerHTML = "";
-
-        if (knownPeers.size === 0) {
-          container.innerHTML = `<div class="text-[11px] text-zinc-500">Awaiting remote connection nodes...</div>`;
-          document.getElementById("sender-state").innerText =
-            "Awaiting Peers...";
-          return;
-        }
-
-        let isTransmitting = false;
-        knownPeers.forEach((p) => {
-          if (p.speed > 0) isTransmitting = true;
-          const dot = p.active
-            ? '<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block mr-1.5 animate-pulse"></span>'
-            : '<span class="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block mr-1.5"></span>';
-          const statusLbl = p.active ? "Active" : "Disconnected";
-          const speedStr = p.active
-            ? `Up: ${(p.speed / 1024).toFixed(1)} KB/s`
-            : "Idle";
-          const sentStr = `Total Sent: ${(p.uploaded / 1024 / 1024).toFixed(2)} MB`;
-
-          const row = document.createElement("div");
-          row.className =
-            "flex justify-between items-center text-[11px] bg-zinc-950 border border-zinc-800 p-2 rounded";
-          row.innerHTML = `
-            <div class="flex items-center text-zinc-300 font-semibold">
-              ${dot} ${p.name} <span class="text-[9px] font-normal text-zinc-500 ml-2">(${statusLbl})</span>
-            </div>
-            <div class="flex gap-4 text-zinc-400 font-mono text-right">
-              <span>${speedStr}</span>
-              <span class="text-zinc-800">|</span>
-              <span>${sentStr}</span>
-            </div>
-          `;
-          container.appendChild(row);
-        });
-
-        document.getElementById("sender-state").innerText = isTransmitting
-          ? "Transmitting Data..."
-          : "Seeding Base Blocks";
-      }
-
-      // --- NODE A UPLOAD TRIGGER ---
+      // --- DRAG & DROP LOGIC ---
       const dropZone = document.getElementById("drop-zone");
       const fileInput = document.getElementById("file-input");
-
-      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) =>
-        document.body.addEventListener(
-          eventName,
-          (e) => e.preventDefault(),
-          false,
-        ),
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((e) =>
+        document.body.addEventListener(e, (ev) => ev.preventDefault(), false),
       );
       dropZone.addEventListener("click", () => fileInput.click());
-      dropZone.addEventListener("dragover", () =>
-        dropZone.classList.add("border-cyan-500"),
-      );
-      dropZone.addEventListener("dragleave", () =>
-        dropZone.classList.remove("border-cyan-500"),
-      );
       dropZone.addEventListener("drop", (e) => {
-        dropZone.classList.remove("border-cyan-500");
         if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files[0]);
       });
       fileInput.addEventListener("change", (e) => {
@@ -399,34 +480,27 @@
       });
 
       async function handleUpload(file) {
-        if (wtClient.torrents.length > 0)
-          wtClient.torrents.forEach((t) => t.destroy());
-        peerCounter = 0;
-        knownPeers.clear();
-        document.getElementById("sender-peers-list").innerHTML =
-          `<div class="text-[11px] text-zinc-500">Awaiting remote connection nodes...</div>`;
-
         document.getElementById("drop-text").innerText = file.name;
         document.getElementById("file-details").innerText =
           "Encrypting Pipeline Payload...";
+        localFilename = file.name;
 
         try {
-          logMsg("Generating secure cryptographic key parameters...");
           const keyBytes = window.crypto.getRandomValues(new Uint8Array(16));
-          const keyMnemonic = ethers.utils.entropyToMnemonic(keyBytes);
-
           const cryptoKey = await deriveKeyFromBytes(keyBytes);
+          localCryptoKey = cryptoKey; // Save for local mode
 
           const reader = new FileReader();
           reader.onload = async function (e) {
             const fileBuffer = e.target.result;
             const filenameBytes = new TextEncoder().encode(file.name);
-
             const combinedBuffer = new Uint8Array(
               4 + filenameBytes.length + fileBuffer.byteLength,
             );
-            const view = new DataView(combinedBuffer.buffer);
-            view.setUint32(0, filenameBytes.length);
+            new DataView(combinedBuffer.buffer).setUint32(
+              0,
+              filenameBytes.length,
+            );
             combinedBuffer.set(filenameBytes, 4);
             combinedBuffer.set(
               new Uint8Array(fileBuffer),
@@ -434,248 +508,370 @@
             );
 
             const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encryptedContent = await window.crypto.subtle.encrypt(
+              { name: "AES-GCM", iv: iv },
+              cryptoKey,
+              combinedBuffer,
+            );
 
-            try {
-              logMsg(
-                "Locking payload data via native browser hardware execution...",
-              );
-              const encryptedContent = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
-                cryptoKey,
-                combinedBuffer,
-              );
-              const finalBlob = new Blob(
-                [iv, new Uint8Array(encryptedContent)],
-                { type: "application/octet-stream" },
-              );
-              const encryptedFile = new File([finalBlob], "payload.enc", {
-                type: "application/octet-stream",
-              });
+            // Reconstruct as contiguous arraybuffer for Raw WebRTC streaming
+            const finalBuffer = new Uint8Array(
+              12 + encryptedContent.byteLength,
+            );
+            finalBuffer.set(iv, 0);
+            finalBuffer.set(new Uint8Array(encryptedContent), 12);
+            localEncryptedFileBuffer = finalBuffer.buffer;
 
-              wtClient.seed(
-                encryptedFile,
-                { announce: rtcTrackers },
-                (torrent) => {
-                  document
-                    .getElementById("sender-status-card")
-                    .classList.remove("hidden");
-
-                  const infoHashBytes = ethers.utils.arrayify(
-                    "0x" + torrent.infoHash,
-                  );
-                  const infoHashMnemonic =
-                    ethers.utils.entropyToMnemonic(infoHashBytes);
-                  const completeWordToken = `${infoHashMnemonic} ${keyMnemonic}`;
-
-                  // Reveal Mnemonic
-                  document.getElementById("generated-phrase").innerText = completeWordToken;
-                  document.getElementById("mnemonic-box").classList.remove("hidden");
-                  
-                  // Generate Secure Share Link & QR Code
-                  const baseUrl = "https://blacktunnel.netlify.app/";
-                  const shareableLink = `${baseUrl}?token=${encodeURIComponent(completeWordToken)}`;
-                  
-                  new QRious({
-                    element: document.getElementById('qr-canvas'),
-                    value: shareableLink,
-                    size: 150,
-                    background: 'white',
-                    foreground: 'black',
-                    level: 'L'
-                  });
-                  document.getElementById('qr-container').classList.remove('hidden');
-
-                  document.getElementById("file-details").innerText =
-                    "Ready to stream. Awaiting remote handshake connection.";
-                  logMsg(`P2P Engine seeding active via tracker grid.`);
-
-                  torrent.on("upload", () => processSenderUI(torrent));
-                  torrent.on("wire", (wire) => {
-                    processSenderUI(torrent);
-                    wire.on("close", () => processSenderUI(torrent));
-                  });
-                },
-              );
-            } catch (encErr) {
-              logMsg("Encryption collapsed. Out of resources.", "error");
+            if (currentMode === "global") {
+              startGlobalSeeding(finalBuffer, keyBytes);
+            } else {
+              startLocalOfflineSeeding(keyBytes);
             }
           };
           reader.readAsArrayBuffer(file);
         } catch (err) {
-          logMsg(`Initialization Error: ${err.message}`, "error");
+          logMsg(`Encryption Error: ${err.message}`, "error");
         }
       }
 
-      // --- NODE B RECEIVER WITH HANDSHAKE TIMEOUT ---
+      // ==========================================
+      // PATH 1: GLOBAL WEBTORRENT MODE
+      // ==========================================
+      function startGlobalSeeding(finalBuffer, keyBytes) {
+        if (wtClient.torrents.length > 0)
+          wtClient.torrents.forEach((t) => t.destroy());
+
+        const keyMnemonic = ethers.utils.entropyToMnemonic(keyBytes);
+        const encryptedFile = new File(
+          [new Blob([finalBuffer])],
+          "payload.enc",
+          { type: "application/octet-stream" },
+        );
+
+        wtClient.seed(encryptedFile, { announce: rtcTrackers }, (torrent) => {
+          document
+            .getElementById("sender-status-card")
+            .classList.remove("hidden");
+          document.getElementById("sender-state").innerText =
+            "Seeding to Trackers...";
+
+          const infoHashMnemonic = ethers.utils.entropyToMnemonic(
+            ethers.utils.arrayify("0x" + torrent.infoHash),
+          );
+          const token = `${infoHashMnemonic} ${keyMnemonic}`;
+
+          document.getElementById("global-phrase").innerText = token;
+          document
+            .getElementById("global-sender-ui")
+            .classList.remove("hidden");
+
+          new QRious({
+            element: document.getElementById("global-qr-canvas"),
+            value: `https://blacktunnel.netlify.app/?token=${encodeURIComponent(token)}`,
+            size: 150,
+            level: "L",
+          });
+          document
+            .getElementById("global-qr-container")
+            .classList.remove("hidden");
+          logMsg(`Global Mode: P2P Engine seeding active via tracker grid.`);
+        });
+      }
+
       document
-        .getElementById("btn-fetch")
+        .getElementById("btn-global-fetch")
         .addEventListener("click", async () => {
-          const fetchBtn = document.getElementById("btn-fetch");
-          const rawToken = document.getElementById("input-phrase").value.trim();
-          const words = rawToken.split(/\s+/);
-
-          if (words.length !== 27) {
-            return logMsg(
-              `Invalid token composition. Received ${words.length}/27 required words.`,
-              "error",
-            );
-          }
-
-          const infoHashMnemonic = words.slice(0, 15).join(" ");
-          const keyMnemonic = words.slice(15).join(" ");
+          const btn = document.getElementById("btn-global-fetch");
+          const words = document
+            .getElementById("global-input-phrase")
+            .value.trim()
+            .split(/\s+/);
+          if (words.length !== 27)
+            return logMsg("Invalid token composition.", "error");
 
           document
             .getElementById("receiver-status-card")
             .classList.remove("hidden");
-          fetchBtn.disabled = true;
-          fetchBtn.innerText = "Searching Swarm Channels...";
-          logMsg(`Reconstituting hex indices from mnemonic elements...`);
+          btn.disabled = true;
+          btn.innerText = "Searching...";
 
           try {
             const infoHash = ethers.utils
-              .mnemonicToEntropy(infoHashMnemonic)
+              .mnemonicToEntropy(words.slice(0, 15).join(" "))
               .substring(2);
-            const keyBytes = ethers.utils.arrayify(
-              ethers.utils.mnemonicToEntropy(keyMnemonic),
+            const cryptoKey = await deriveKeyFromBytes(
+              ethers.utils.arrayify(
+                ethers.utils.mnemonicToEntropy(words.slice(15).join(" ")),
+              ),
             );
-            const cryptoKey = await deriveKeyFromBytes(keyBytes);
-
-            logMsg(
-              "Locating channel connections matching token coordinates...",
-            );
-
-            const handshakeTimeout = setTimeout(() => {
-              logMsg(
-                "Handshake timeout: No active matching sender discovered or invalid token keyframe.",
-                "error",
-              );
-              alert(
-                "Handshake Failed!\n\nNo active sender found for this token configuration.\n\nPlease confirm:\n1. The sender still has their terminal interface open.\n2. The 27-word token sequence was parsed exactly.",
-              );
-
-              wtClient.remove(infoHash);
-              document.getElementById("receiver-status-card").classList.add("hidden");
-              fetchBtn.disabled = false;
-              fetchBtn.innerText = "Initiate Handshake & Download";
-            }, 25000);
 
             wtClient.add(infoHash, { announce: rtcTrackers }, (torrent) => {
-              clearTimeout(handshakeTimeout);
-              fetchBtn.innerText = "Downlinking Stream...";
-              logMsg(
-                "Target file block index found! Streaming data arrays...",
-                "success",
-              );
-
-              torrent.on("error", (err) => {
-                logMsg(
-                  `Swarm engine data pipeline crash: ${err.message}`,
-                  "error",
-                );
-                fetchBtn.disabled = false;
-                fetchBtn.innerText = "Initiate Handshake & Download";
-              });
-
+              btn.innerText = "Downloading...";
               const updateInterval = setInterval(() => {
                 const progress = (torrent.progress * 100).toFixed(1);
-                document.getElementById("rx-progress").innerText = `${progress}%`;
-                document.getElementById("rx-progress-bar").style.width = `${progress}%`;
-                document.getElementById("rx-speed").innerText =
-                  `Down: ${(torrent.downloadSpeed / 1024 / 1024).toFixed(2)} MB/s`;
+                document.getElementById("rx-progress").innerText =
+                  `${progress}%`;
+                document.getElementById("rx-progress-bar").style.width =
+                  `${progress}%`;
               }, 500);
 
               torrent.on("done", () => {
                 clearInterval(updateInterval);
-                document.getElementById("rx-progress").innerText = "Decrypting...";
-
-                torrent.files[0].getBlob(async (err, encryptedBlob) => {
-                  if (err)
-                    return logMsg(`Decentralized extraction layer fault: ${err}`, "error");
-
-                  try {
-                    const fullBuffer = await encryptedBlob.arrayBuffer();
-                    const iv = fullBuffer.slice(0, 12);
-                    const ciphertext = fullBuffer.slice(12);
-
-                    const combinedBuffer = await window.crypto.subtle.decrypt(
-                      { name: "AES-GCM", iv: new Uint8Array(iv) },
-                      cryptoKey,
-                      ciphertext,
-                    );
-
-                    const view = new DataView(combinedBuffer);
-                    const filenameLen = view.getUint32(0);
-                    const filenameBytes = new Uint8Array(combinedBuffer, 4, filenameLen);
-                    const originalFilename = new TextDecoder().decode(filenameBytes);
-
-                    const fileBytes = new Uint8Array(combinedBuffer, 4 + filenameLen);
-                    const plainBlob = new Blob([fileBytes], { type: "application/octet-stream" });
-
-                    const downloadUrl = URL.createObjectURL(plainBlob);
-                    const a = document.createElement("a");
-                    a.href = downloadUrl;
-                    a.download = originalFilename;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-
-                    setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
-                    document.getElementById("rx-progress").innerText = "Saved";
-                    logMsg(`File successfully reassembled and written as: ${originalFilename}`, "success");
-
-                    fetchBtn.disabled = false;
-                    fetchBtn.innerText = "Initiate Handshake & Download";
-                    wtClient.remove(torrent.infoHash);
-                  } catch (cryptoErr) {
-                    logMsg("Decryption failed! The phrase dictionary parameters or token input index is mismatched.", "error");
-                    document.getElementById("rx-progress").innerText = "Failed";
-                    fetchBtn.disabled = false;
-                    fetchBtn.innerText = "Initiate Handshake & Download";
-                  }
+                document.getElementById("rx-progress").innerText =
+                  "Decrypting...";
+                torrent.files[0].getBlob(async (err, blob) => {
+                  if (err) return;
+                  await decryptAndSave(await blob.arrayBuffer(), cryptoKey);
+                  btn.disabled = false;
+                  btn.innerText = "Initiate Download";
+                  wtClient.remove(torrent.infoHash);
                 });
               });
             });
           } catch (err) {
-            logMsg(`Token decoding framework failure: ${err.message}`, "error");
-            fetchBtn.disabled = false;
-            fetchBtn.innerText = "Initiate Handshake & Download";
+            logMsg("Global fetch failed.", "error");
+            btn.disabled = false;
           }
         });
 
-      // --- AUTOMATED SECURE HANDSHAKE (ZERO-CLICK QR INTERCEPT) ---
-      // FIX: Changed to 'load' to ensure WebTorrent and Ethers CDNs are fully initialized
-      window.addEventListener('load', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenPhrase = urlParams.get('token');
+      // ==========================================
+      // PATH 2: LOCAL OFFLINE WEBRTC MODE (SNEAKERNET SIGNALING)
+      // ==========================================
+      async function startLocalOfflineSeeding(keyBytes) {
+        logMsg("Initializing Local Wi-Fi Direct Mode...", "warn");
+        document.getElementById("local-sender-ui").classList.remove("hidden");
+        document.getElementById("local-step-1").classList.remove("hidden");
+        document
+          .getElementById("sender-status-card")
+          .classList.remove("hidden");
+        document.getElementById("sender-state").innerText =
+          "Generating Offline Offer...";
 
-        if (tokenPhrase) {
-          const words = tokenPhrase.trim().split(/\s+/);
-          
-          if (words.length === 27) {
-            logMsg("Intercepted secure token from URL routing.", "success");
-            
-            const inputBox = document.getElementById('input-phrase');
-            const fetchBtn = document.getElementById('btn-fetch');
+        localPeerConnection = new RTCPeerConnection({ iceServers: [] }); // Empty = Local network only!
 
-            if (inputBox && fetchBtn) {
-              // 1. Populate the Node B Text Area
-              inputBox.value = tokenPhrase;
-              
-              // FIX: Add an 800ms delay. 
-              // Browsers (like Google Lens) block immediate artificial clicks to prevent spam.
-              // This delay bypasses the block and allows WebRTC to prepare.
-              setTimeout(() => {
-                  logMsg("Initiating automated P2P handshake...", "success");
-                  fetchBtn.click();
-              }, 800);
-              
-              // 3. SECURE CLEANUP: Strip the token from the browser bar instantly
-              const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-              window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-            }
-          } else {
-            logMsg("URL token rejected: Invalid length or structure.", "error");
+        // Setup Data Channel for file transfer
+        localDataChannel =
+          localPeerConnection.createDataChannel("fileTransfer");
+        localDataChannel.binaryType = "arraybuffer";
+
+        localDataChannel.onopen = () => {
+          logMsg(
+            "Local Hotspot Connection ESTABLISHED! Streaming file...",
+            "success",
+          );
+          document.getElementById("sender-state").innerText =
+            "Streaming via Hotspot...";
+          document
+            .getElementById("sender-upload-progress")
+            .classList.remove("hidden");
+          streamFileInChunks(localDataChannel, localEncryptedFileBuffer);
+        };
+
+        // Gather local ICE candidates
+        localPeerConnection.onicecandidate = (e) => {
+          if (!e.candidate) {
+            // Gathering complete
+            logMsg("Local IP routes gathered. Encoding Offer...", "success");
+            const sdp = localPeerConnection.localDescription;
+            const keyHex = ethers.utils.hexlify(keyBytes).substring(2);
+            // Compress SDP and attach key
+            const offerPayload =
+              LZString.compressToBase64(JSON.stringify(sdp)) + "||" + keyHex;
+
+            document.getElementById("local-offer-text").value = offerPayload;
+            new QRious({
+              element: document.getElementById("local-offer-qr"),
+              value: offerPayload,
+              size: 180,
+              level: "M",
+            });
+            document.getElementById("sender-state").innerText =
+              "Awaiting Node B Answer...";
+            document.getElementById("local-step-2").classList.remove("hidden");
           }
+        };
+
+        const offer = await localPeerConnection.createOffer();
+        await localPeerConnection.setLocalDescription(offer);
+      }
+
+      // Sender confirms Answer
+      document
+        .getElementById("btn-local-connect")
+        .addEventListener("click", async () => {
+          const answerStr = document
+            .getElementById("local-answer-input")
+            .value.trim();
+          try {
+            const rawAnswer = JSON.parse(
+              LZString.decompressFromBase64(answerStr),
+            );
+            await localPeerConnection.setRemoteDescription(
+              new RTCSessionDescription(rawAnswer),
+            );
+            logMsg("Answer accepted. Tunneling...", "success");
+          } catch (e) {
+            logMsg("Invalid Answer token format.", "error");
+          }
+        });
+
+      // Receiver Generates Answer
+      document
+        .getElementById("btn-local-generate-answer")
+        .addEventListener("click", async () => {
+          const payload = document
+            .getElementById("local-offer-input")
+            .value.trim();
+          if (!payload.includes("||"))
+            return logMsg("Invalid Offer Token.", "error");
+
+          const parts = payload.split("||");
+          const compressedOffer = parts[0];
+          const keyHex = parts[1];
+
+          const cryptoKey = await deriveKeyFromBytes(
+            ethers.utils.arrayify("0x" + keyHex),
+          );
+
+          localPeerConnection = new RTCPeerConnection({ iceServers: [] });
+
+          let receiveBuffer = [];
+          let totalReceived = 0;
+
+          localPeerConnection.ondatachannel = (e) => {
+            const receiveChannel = e.channel;
+            receiveChannel.binaryType = "arraybuffer";
+            document
+              .getElementById("receiver-status-card")
+              .classList.remove("hidden");
+
+            receiveChannel.onmessage = async (event) => {
+              if (typeof event.data === "string" && event.data === "EOF") {
+                logMsg("Offline File fully received. Decrypting...", "success");
+                document.getElementById("rx-progress").innerText =
+                  "Decrypting...";
+                const combined = new Uint8Array(totalReceived);
+                let offset = 0;
+                for (let b of receiveBuffer) {
+                  combined.set(new Uint8Array(b), offset);
+                  offset += b.byteLength;
+                }
+                await decryptAndSave(combined.buffer, cryptoKey);
+              } else {
+                receiveBuffer.push(event.data);
+                totalReceived += event.data.byteLength;
+                // UI Update (Estimate progress based on chunks, no metadata sent for simplicity)
+                const mbReceived = (totalReceived / 1024 / 1024).toFixed(1);
+                document.getElementById("rx-progress").innerText =
+                  `${mbReceived} MB`;
+              }
+            };
+          };
+
+          localPeerConnection.onicecandidate = (e) => {
+            if (!e.candidate) {
+              const sdp = localPeerConnection.localDescription;
+              const answerPayload = LZString.compressToBase64(
+                JSON.stringify(sdp),
+              );
+              document.getElementById("local-answer-text").value =
+                answerPayload;
+              new QRious({
+                element: document.getElementById("local-answer-qr"),
+                value: answerPayload,
+                size: 180,
+                level: "M",
+              });
+              document
+                .getElementById("local-rx-step-2")
+                .classList.remove("hidden");
+              logMsg("Answer generated. Scan on Node A.", "success");
+            }
+          };
+
+          try {
+            const rawOffer = JSON.parse(
+              LZString.decompressFromBase64(compressedOffer),
+            );
+            await localPeerConnection.setRemoteDescription(
+              new RTCSessionDescription(rawOffer),
+            );
+            const answer = await localPeerConnection.createAnswer();
+            await localPeerConnection.setLocalDescription(answer);
+          } catch (e) {
+            logMsg("Failed to parse Offer.", "error");
+          }
+        });
+
+      // Helper to push WebRTC data in 64kb chunks securely
+      function streamFileInChunks(channel, buffer) {
+        const chunkSize = 64 * 1024; // 64KB chunk limit for local RTC
+        let offset = 0;
+        const total = buffer.byteLength;
+
+        const sendChunk = () => {
+          while (offset < total) {
+            if (channel.bufferedAmount > channel.bufferedAmountLowThreshold) {
+              channel.onbufferedamountlow = () => {
+                channel.onbufferedamountlow = null;
+                sendChunk();
+              };
+              return;
+            }
+            channel.send(buffer.slice(offset, offset + chunkSize));
+            offset += chunkSize;
+            document.getElementById("tx-progress-bar").style.width =
+              `${(offset / total) * 100}%`;
+          }
+          channel.send("EOF");
+          logMsg("Transfer Complete.", "success");
+        };
+        sendChunk();
+      }
+
+      // Helper to decrypt AES-GCM
+      async function decryptAndSave(fullBuffer, cryptoKey) {
+        try {
+          const iv = fullBuffer.slice(0, 12);
+          const ciphertext = fullBuffer.slice(12);
+          const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(iv) },
+            cryptoKey,
+            ciphertext,
+          );
+
+          const view = new DataView(decrypted);
+          const filenameLen = view.getUint32(0);
+          const filenameBytes = new Uint8Array(decrypted, 4, filenameLen);
+          const originalFilename = new TextDecoder().decode(filenameBytes);
+          const fileBytes = new Uint8Array(decrypted, 4 + filenameLen);
+
+          const downloadUrl = URL.createObjectURL(new Blob([fileBytes]));
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = originalFilename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          document.getElementById("rx-progress").innerText = "Saved";
+          logMsg(
+            `File successfully reassembled: ${originalFilename}`,
+            "success",
+          );
+        } catch (e) {
+          logMsg("Decryption failed.", "error");
+        }
+      }
+
+      // --- AUTOMATED 1-CLICK GLOBAL HANDSHAKE ---
+      window.addEventListener("load", () => {
+        const token = new URLSearchParams(window.location.search).get("token");
+        if (token && token.trim().split(/\s+/).length === 27) {
+          document.getElementById("global-input-phrase").value = token;
+          const btn = document.getElementById("btn-global-fetch");
+          setTimeout(() => btn.click(), 800);
+          window.history.replaceState({}, "", window.location.pathname);
         }
       });
     </script>
