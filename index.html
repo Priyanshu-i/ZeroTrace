@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZeroTrace // Pure Mnemonic P2P Pipeline</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=3132&format=png&color=1A1A1A">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -152,11 +153,12 @@
             >
           </div>
           <div
-            class="flex justify-between items-center text-[11px] text-zinc-500 border-t border-zinc-800/50 pt-2"
+            id="sender-peers-list"
+            class="space-y-2 border-t border-zinc-800/50 pt-2 max-h-40 overflow-y-auto"
           >
-            <span id="tx-peers">Peers: 0</span>
-            <span id="tx-speed">Up: 0 KB/s</span>
-            <span id="tx-total">Total Sent: 0 MB</span>
+            <div class="text-[11px] text-zinc-500">
+              Awaiting remote connection nodes...
+            </div>
           </div>
         </div>
       </section>
@@ -282,7 +284,86 @@
         );
       }
 
-      // --- NODE A SENDER ---
+      // --- NODE A SENDER TRACKING DATA ---
+      let peerCounter = 0;
+      const knownPeers = new Map(); // Keep track of each isolated peer mapping
+
+      function processSenderUI(torrent) {
+        // Reset current active states to flag elements that drop off
+        knownPeers.forEach((p) => (p.active = false));
+
+        // Map live transport wires
+        torrent.wires.forEach((wire) => {
+          const pId =
+            wire.peerId || wire.remoteAddress || Math.random().toString();
+          if (!knownPeers.has(pId)) {
+            peerCounter++;
+            knownPeers.set(pId, {
+              name: `Peer ${peerCounter}`,
+              uploaded: 0,
+              speed: 0,
+              active: true,
+            });
+            logMsg(
+              `New matrix data channel link assigned: Peer ${peerCounter}`,
+              "success",
+            );
+          }
+
+          const targetPeer = knownPeers.get(pId);
+          targetPeer.active = true;
+          targetPeer.uploaded = wire.uploaded || 0;
+          targetPeer.speed =
+            typeof wire.uploadSpeed === "function"
+              ? wire.uploadSpeed()
+              : wire.uploadSpeed || 0;
+        });
+
+        // Repopulate isolated telemetry display rows
+        const container = document.getElementById("sender-peers-list");
+        container.innerHTML = "";
+
+        if (knownPeers.size === 0) {
+          container.innerHTML = `<div class="text-[11px] text-zinc-500">Awaiting remote connection nodes...</div>`;
+          document.getElementById("sender-state").innerText =
+            "Awaiting Peers...";
+          return;
+        }
+
+        let isTransmitting = false;
+        knownPeers.forEach((p) => {
+          if (p.speed > 0) isTransmitting = true;
+          const dot = p.active
+            ? '<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block mr-1.5 animate-pulse"></span>'
+            : '<span class="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block mr-1.5"></span>';
+          const statusLbl = p.active ? "Active" : "Disconnected";
+          const speedStr = p.active
+            ? `Up: ${(p.speed / 1024).toFixed(1)} KB/s`
+            : "Idle";
+          const sentStr = `Total Sent: ${(p.uploaded / 1024 / 1024).toFixed(2)} MB`;
+
+          const row = document.createElement("div");
+          row.className =
+            "flex justify-between items-center text-[11px] bg-zinc-950 border border-zinc-800 p-2 rounded";
+          row.innerHTML = `
+            <div class="flex items-center text-zinc-300 font-semibold">
+              ${dot} ${p.name} <span class="text-[9px] font-normal text-zinc-500 ml-2">(${statusLbl})</span>
+            </div>
+            <div class="flex gap-4 text-zinc-400 font-mono text-right">
+              <span>${speedStr}</span>
+              <span class="text-zinc-800">|</span>
+              <span>${sentStr}</span>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+
+        document.getElementById("sender-state").innerText = isTransmitting
+          ? "Transmitting Data..."
+          : "Seeding Base Blocks";
+      }
+
+      // --- NODE A UPLOAD TRIGGER ---
       const dropZone = document.getElementById("drop-zone");
       const fileInput = document.getElementById("file-input");
 
@@ -312,14 +393,19 @@
       async function handleUpload(file) {
         if (wtClient.torrents.length > 0)
           wtClient.torrents.forEach((t) => t.destroy());
+        peerCounter = 0;
+        knownPeers.clear();
+        document.getElementById("sender-peers-list").innerHTML =
+          `<div class="text-[11px] text-zinc-500">Awaiting remote connection nodes...</div>`;
+
         document.getElementById("drop-text").innerText = file.name;
         document.getElementById("file-details").innerText =
           "Encrypting Pipeline Payload...";
 
         try {
           logMsg("Generating secure cryptographic key parameters...");
-          const keyBytes = window.crypto.getRandomValues(new Uint8Array(16)); // 128 bits
-          const keyMnemonic = ethers.utils.entropyToMnemonic(keyBytes); // Gives 12 words
+          const keyBytes = window.crypto.getRandomValues(new Uint8Array(16));
+          const keyMnemonic = ethers.utils.entropyToMnemonic(keyBytes);
 
           const cryptoKey = await deriveKeyFromBytes(keyBytes);
 
@@ -328,7 +414,6 @@
             const fileBuffer = e.target.result;
             const filenameBytes = new TextEncoder().encode(file.name);
 
-            // Structure: [4-byte header for filename length] + [Filename strings] + [Raw File Payload Data]
             const combinedBuffer = new Uint8Array(
               4 + filenameBytes.length + fileBuffer.byteLength,
             );
@@ -367,14 +452,11 @@
                     .getElementById("sender-status-card")
                     .classList.remove("hidden");
 
-                  // Convert 40-char hex InfoHash directly to 15 English BIP-39 words
                   const infoHashBytes = ethers.utils.arrayify(
                     "0x" + torrent.infoHash,
                   );
                   const infoHashMnemonic =
                     ethers.utils.entropyToMnemonic(infoHashBytes);
-
-                  // Combined Token contains exactly 27 English words (15 for InfoHash + 12 for Key)
                   const completeWordToken = `${infoHashMnemonic} ${keyMnemonic}`;
 
                   document.getElementById("generated-phrase").innerText =
@@ -386,15 +468,11 @@
                     "Ready to stream. Awaiting remote handshake connection.";
                   logMsg(`P2P Engine seeding active via tracker grid.`);
 
-                  torrent.on("upload", () => {
-                    document.getElementById("sender-state").innerText =
-                      "Transmitting Data...";
-                    document.getElementById("tx-peers").innerText =
-                      `Peers: ${torrent.numPeers}`;
-                    document.getElementById("tx-speed").innerText =
-                      `Up: ${(torrent.uploadSpeed / 1024).toFixed(1)} KB/s`;
-                    document.getElementById("tx-total").innerText =
-                      `Total Sent: ${(torrent.uploaded / 1024 / 1024).toFixed(2)} MB`;
+                  // Attach isolated wire monitoring handlers
+                  torrent.on("upload", () => processSenderUI(torrent));
+                  torrent.on("wire", (wire) => {
+                    processSenderUI(torrent);
+                    wire.on("close", () => processSenderUI(torrent));
                   });
                 },
               );
@@ -408,10 +486,11 @@
         }
       }
 
-      // --- NODE B RECEIVER ---
+      // --- NODE B RECEIVER WITH HANDSHAKE TIMEOUT ---
       document
         .getElementById("btn-fetch")
         .addEventListener("click", async () => {
+          const fetchBtn = document.getElementById("btn-fetch");
           const rawToken = document.getElementById("input-phrase").value.trim();
           const words = rawToken.split(/\s+/);
 
@@ -428,12 +507,14 @@
           document
             .getElementById("receiver-status-card")
             .classList.remove("hidden");
+          fetchBtn.disabled = true;
+          fetchBtn.innerText = "Searching Swarm Channels...";
           logMsg(`Reconstituting hex indices from mnemonic elements...`);
 
           try {
             const infoHash = ethers.utils
               .mnemonicToEntropy(infoHashMnemonic)
-              .substring(2); // Remove 0x prefix
+              .substring(2);
             const keyBytes = ethers.utils.arrayify(
               ethers.utils.mnemonicToEntropy(keyMnemonic),
             );
@@ -442,11 +523,44 @@
             logMsg(
               "Locating channel connections matching token coordinates...",
             );
+
+            // 25-Second Connection Timeout Guard
+            const handshakeTimeout = setTimeout(() => {
+              logMsg(
+                "Handshake timeout: No active matching sender discovered or invalid token keyframe.",
+                "error",
+              );
+              alert(
+                "Handshake Failed!\n\nNo active sender found for this token configuration.\n\nPlease confirm:\n1. The sender still has their terminal interface open.\n2. The 27-word token sequence was parsed exactly.",
+              );
+
+              // Unregister stalled tracker engine lookup parameters
+              wtClient.remove(infoHash);
+
+              document
+                .getElementById("receiver-status-card")
+                .classList.add("hidden");
+              fetchBtn.disabled = false;
+              fetchBtn.innerText = "Initiate Handshake & Download";
+            }, 25000);
+
             wtClient.add(infoHash, { announce: rtcTrackers }, (torrent) => {
+              // Callback triggers only when swarm metadata resolves successfully
+              clearTimeout(handshakeTimeout);
+              fetchBtn.innerText = "Downlinking Stream...";
               logMsg(
                 "Target file block index found! Streaming data arrays...",
                 "success",
               );
+
+              torrent.on("error", (err) => {
+                logMsg(
+                  `Swarm engine data pipeline crash: ${err.message}`,
+                  "error",
+                );
+                fetchBtn.disabled = false;
+                fetchBtn.innerText = "Initiate Handshake & Download";
+              });
 
               const updateInterval = setInterval(() => {
                 const progress = (torrent.progress * 100).toFixed(1);
@@ -481,7 +595,6 @@
                       ciphertext,
                     );
 
-                    // Read the hidden filename array layout out of decrypted buffer space
                     const view = new DataView(combinedBuffer);
                     const filenameLen = view.getUint32(0);
 
@@ -516,6 +629,9 @@
                       `File successfully reassembled and written as: ${originalFilename}`,
                       "success",
                     );
+
+                    fetchBtn.disabled = false;
+                    fetchBtn.innerText = "Initiate Handshake & Download";
                     wtClient.remove(torrent.infoHash);
                   } catch (cryptoErr) {
                     logMsg(
@@ -523,12 +639,16 @@
                       "error",
                     );
                     document.getElementById("rx-progress").innerText = "Failed";
+                    fetchBtn.disabled = false;
+                    fetchBtn.innerText = "Initiate Handshake & Download";
                   }
                 });
               });
             });
           } catch (err) {
             logMsg(`Token decoding framework failure: ${err.message}`, "error");
+            fetchBtn.disabled = false;
+            fetchBtn.innerText = "Initiate Handshake & Download";
           }
         });
     </script>
