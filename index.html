@@ -6,460 +6,757 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>ZeroTrace // Pure Offline P2P</title>
+    <title>ZeroTrace // Secure P2P</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#F3F4F6" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://img.icons8.com/?size=100&id=3132&format=png&color=0B57D0"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="https://img.icons8.com/?size=192&id=3132&format=png&color=0B57D0"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Roboto:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
     <style>
-      /* Pure Vanilla CSS - Google Material 3 Design */
-      :root {
-        --bg: #f8f9fa;
-        --surface: #ffffff;
-        --primary: #0b57d0;
-        --primary-container: #d3e3fd;
-        --text-main: #1f1f1f;
-        --text-light: #444746;
-        --border: #e0e2e0;
-        --font: "Segoe UI", Roboto, Helvetica, sans-serif;
-      }
       body {
-        font-family: var(--font);
-        background: var(--bg);
-        color: var(--text-main);
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
+        font-family: "Roboto", sans-serif;
+        background-color: #f8f9fa;
+        color: #1f1f1f;
       }
-      .container {
-        max-width: 800px;
-        w-full: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 20px;
-        width: 100%;
+      h1,
+      h2,
+      h3,
+      .brand-font {
+        font-family: "Outfit", sans-serif;
       }
-      @media (min-width: 768px) {
-        .container {
-          grid-template-columns: 1fr 1fr;
-        }
+
+      ::-webkit-scrollbar {
+        width: 6px;
       }
-      .card {
-        background: var(--surface);
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .header h1 {
-        font-size: 24px;
-        font-weight: 600;
-        margin: 0;
-        color: var(--primary);
-      }
-      .header p {
-        font-size: 14px;
-        color: var(--text-light);
-        margin: 4px 0 0 0;
-      }
-      .btn {
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 100px;
-        font-weight: 500;
-        font-size: 14px;
-        cursor: pointer;
-        transition: 0.2s;
-        width: 100%;
-      }
-      .btn:hover {
-        opacity: 0.9;
-      }
-      .btn-outline {
+      ::-webkit-scrollbar-track {
         background: transparent;
-        border: 1px solid var(--border);
-        color: var(--text-main);
       }
-      .dropzone {
-        border: 2px dashed var(--border);
-        border-radius: 16px;
-        padding: 30px;
-        text-align: center;
-        cursor: pointer;
-        transition: 0.2s;
-        background: #fafafa;
-      }
-      .dropzone:hover {
-        border-color: var(--primary);
-        background: var(--primary-container);
-      }
-      input[type="file"] {
-        display: none;
-      }
-      .hidden {
-        display: none !important;
-      }
-      .qr-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        padding: 16px;
-        background: #f0f0f0;
-        border-radius: 12px;
-      }
-      canvas {
-        border-radius: 8px;
-      }
-      .progress-bar {
-        width: 100%;
-        height: 8px;
-        background: var(--border);
+      ::-webkit-scrollbar-thumb {
+        background: #e4e4e7;
         border-radius: 10px;
-        overflow: hidden;
       }
-      .progress-fill {
-        height: 100%;
-        width: 0%;
-        background: var(--primary);
-        transition: 0.3s;
+      ::-webkit-scrollbar-thumb:hover {
+        background: #d4d4d8;
       }
-      .status-text {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-light);
-      }
-      textarea {
-        width: 90%;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        font-family: monospace;
-        font-size: 11px;
-        resize: none;
-        background: #f9f9f9;
+
+      .m3-card {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.05),
+          0 1px 2px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
     </style>
   </head>
-  <body>
-    <div class="header">
-      <h1>ZeroTrace Hotspot</h1>
-      <p>100% Offline Local Wi-Fi Transfer</p>
-    </div>
 
-    <div class="container">
-      <div class="card">
-        <h2 style="font-size: 18px; margin: 0">📤 Send File</h2>
-        <div
-          class="dropzone"
-          id="drop-zone"
-          onclick="document.getElementById('file-input').click()"
+  <body
+    class="min-h-screen flex flex-col items-center p-4 sm:p-8 pb-24 selection:bg-blue-200"
+  >
+    <!-- HEADER WITH P2P STATUS INDICATOR -->
+    <header
+      class="w-full max-w-4xl flex flex-row justify-between items-center mb-8 gap-6"
+    >
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-600 p-2 rounded-xl text-white shadow-md">
+          <span class="material-symbols-rounded text-3xl">wifi_tethering</span>
+        </div>
+        <div>
+          <h1
+            class="text-2xl font-semibold brand-font tracking-tight text-gray-900"
+          >
+            ZeroTrace
+          </h1>
+          <p class="text-sm text-gray-500">Secure P2P Data Pipeline</p>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm"
+      >
+        <span
+          id="net-status-dot"
+          class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"
+        ></span>
+        <span id="net-status" class="text-xs font-medium text-gray-600"
+          >Connecting Engine...</span
         >
-          <input type="file" id="file-input" />
-          <span id="drop-text" style="font-size: 14px; color: var(--text-light)"
-            >Tap to select file</span
+      </div>
+    </header>
+
+    <main
+      class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 mb-6"
+    >
+      <!-- SENDER SECTION -->
+      <section class="m3-card p-6 flex flex-col gap-5 border border-gray-100">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2 text-blue-700">
+            <span class="material-symbols-rounded">upload</span>
+            <h2 class="text-lg font-semibold brand-font">Send File</h2>
+          </div>
+          <button
+            id="btn-clear-send"
+            onclick="resetSender()"
+            class="hidden text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
           >
+            <span class="material-symbols-rounded text-sm">refresh</span> Clear
+          </button>
         </div>
 
-        <div id="sender-ui" class="hidden">
-          <div class="qr-box">
-            <span class="status-text">Step 1: Scan Offer on Receiver</span>
-            <canvas id="qr-offer"></canvas>
-            <textarea id="txt-offer" rows="2" readonly></textarea>
-            <button
-              class="btn btn-outline"
-              onclick="
-                navigator.clipboard.writeText(
-                  document.getElementById('txt-offer').value,
-                )
-              "
+        <div
+          id="drop-zone"
+          class="border-2 border-dashed border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center gap-3"
+        >
+          <input type="file" id="file-input" class="hidden" />
+          <div class="bg-blue-50 text-blue-600 p-3 rounded-full mb-1">
+            <span class="material-symbols-rounded text-3xl">add_box</span>
+          </div>
+          <p class="text-gray-700 font-medium id-text" id="drop-text">
+            Drag a file here or click to browse
+          </p>
+          <p class="text-xs text-gray-400" id="file-details">
+            Limit: ~500MB (Browser RAM limit)
+          </p>
+        </div>
+
+        <!-- SEED LINK & QR DISPLAY -->
+        <div id="global-sender-ui" class="hidden flex-col gap-4">
+          <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+            <p
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
             >
-              Copy (If no camera)
-            </button>
+              Share Link
+            </p>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                id="global-share-link"
+                class="w-full bg-white border border-gray-200 rounded-xl px-3 text-sm text-gray-700 focus:outline-none"
+                readonly
+              />
+              <button
+                onclick="copyToClipboard('global-share-link')"
+                class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl flex items-center justify-center transition-colors"
+              >
+                <span class="material-symbols-rounded text-[20px]"
+                  >content_copy</span
+                >
+              </button>
+            </div>
           </div>
 
-          <div style="margin-top: 10px">
-            <span class="status-text">Step 2: Paste Receiver's Answer</span>
+          <div
+            class="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
+          >
+            <span
+              class="text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide"
+              >Or Scan with Lens</span
+            >
+            <canvas
+              id="global-qr-canvas"
+              class="rounded-lg border border-gray-100"
+            ></canvas>
+          </div>
+        </div>
+
+        <!-- SENDER STATUS BLOCK -->
+        <div
+          id="sender-status-card"
+          class="hidden mt-auto bg-slate-50 p-4 rounded-2xl border border-gray-200 flex flex-col gap-3"
+        >
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-500 font-medium">Swarm Status:</span>
+            <span
+              id="sender-state"
+              class="text-blue-600 font-semibold animate-pulse"
+              >Awaiting Peers...</span
+            >
+          </div>
+
+          <div id="sender-upload-progress" class="hidden flex flex-col gap-1.5">
+            <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+              <div
+                id="tx-progress-bar"
+                class="bg-blue-600 h-full w-0 transition-all"
+              ></div>
+            </div>
+            <div
+              class="flex justify-between text-[11px] text-gray-400 font-mono"
+            >
+              <span id="tx-speed">Up: 0 KB/s</span>
+              <span id="tx-total-uploaded">Sent: 0 MB</span>
+            </div>
+          </div>
+
+          <div
+            id="sender-peers-list"
+            class="space-y-1.5 border-t border-gray-200/60 pt-2.5 max-h-24 overflow-y-auto"
+          >
+            <div class="text-[11px] text-gray-400 italic">
+              Awaiting remote connection nodes...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECEIVER SECTION -->
+      <section class="m3-card p-6 flex flex-col gap-5 border border-gray-100">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2 text-purple-700">
+            <span class="material-symbols-rounded">download</span>
+            <h2 class="text-lg font-semibold brand-font">Receive File</h2>
+          </div>
+          <button
+            id="btn-clear-rx"
+            onclick="resetReceiver()"
+            class="hidden text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+          >
+            <span class="material-symbols-rounded text-sm">refresh</span> Clear
+          </button>
+        </div>
+
+        <div id="global-receiver-ui" class="flex flex-col gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-600 block mb-2"
+              >Access Token</label
+            >
             <textarea
-              id="input-answer"
-              rows="2"
-              placeholder="Paste Answer here..."
+              id="global-input-phrase"
+              rows="4"
+              placeholder="Paste the 27-word phrase or token link here..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-none transition-all placeholder:text-gray-400 text-gray-700"
             ></textarea>
-            <button
-              class="btn"
-              style="margin-top: 8px"
-              onclick="connectSender()"
+          </div>
+          <button
+            id="btn-global-fetch"
+            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+          >
+            <span class="material-symbols-rounded">cloud_download</span>
+            Initiate Download
+          </button>
+        </div>
+
+        <!-- RECEIVER STATUS BLOCK -->
+        <div
+          id="receiver-status-card"
+          class="hidden mt-auto bg-purple-50/50 p-4 rounded-2xl border border-purple-100 flex flex-col gap-3"
+        >
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-purple-900 font-medium" id="rx-status-text"
+              >Download Progress:</span
             >
-              Start Transfer
-            </button>
+            <span id="rx-progress" class="text-purple-600 font-bold">0%</span>
+          </div>
+          <div
+            class="w-full bg-purple-200/60 h-1.5 rounded-full overflow-hidden"
+          >
+            <div
+              id="rx-progress-bar"
+              class="bg-gradient-to-r from-purple-600 to-indigo-600 h-full w-0 transition-all duration-150"
+            ></div>
+          </div>
+          <div
+            class="flex justify-between items-center text-[11px] text-purple-700/80 font-mono"
+          >
+            <span id="rx-speed">Down: 0 MB/s</span>
+            <span id="rx-peers-count">Peers: 0 connected</span>
           </div>
         </div>
+      </section>
+    </main>
 
-        <div id="sender-progress" class="hidden">
-          <span class="status-text" id="sender-status">Transferring...</span>
-          <div class="progress-bar">
-            <div class="progress-fill" id="tx-fill"></div>
-          </div>
+    <!-- DIAGNOSTICS CONSOLE -->
+    <section class="w-full max-w-4xl mb-4">
+      <div
+        id="debug-logs"
+        class="bg-gray-900 p-4 rounded-2xl h-28 overflow-y-auto text-left font-mono text-[11px] text-gray-300 shadow-inner border border-gray-800"
+      >
+        <div class="text-gray-500 mb-1">
+          // System Diagnostics Log Initialized
         </div>
       </div>
+    </section>
 
-      <div class="card">
-        <h2 style="font-size: 18px; margin: 0">📥 Receive File</h2>
-        <div id="rx-step-1">
-          <span class="status-text block">Paste Sender's Offer</span>
-          <textarea
-            id="input-offer"
-            rows="3"
-            placeholder="Paste Offer here..."
-          ></textarea>
-          <button
-            class="btn"
-            style="margin-top: 10px"
-            onclick="generateAnswer()"
-          >
-            Generate Answer
-          </button>
-        </div>
-
-        <div id="rx-step-2" class="hidden qr-box" style="margin-top: 16px">
-          <span class="status-text">Scan Answer on Sender</span>
-          <canvas id="qr-answer"></canvas>
-          <textarea id="txt-answer" rows="2" readonly></textarea>
-          <button
-            class="btn btn-outline"
-            onclick="
-              navigator.clipboard.writeText(
-                document.getElementById('txt-answer').value,
-              )
-            "
-          >
-            Copy
-          </button>
-        </div>
-
-        <div id="rx-progress" class="hidden" style="margin-top: 16px">
-          <span class="status-text" id="rx-status">Waiting for data...</span>
-          <div class="progress-bar">
-            <div class="progress-fill" id="rx-fill"></div>
-          </div>
-        </div>
-      </div>
+    <!-- FLOATING BOTTOM FIXED FOOTER -->
+    <footer
+    class="bg-blue-600 text-white border-t border-blue-500 shadow-xl py-3 px-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs font-medium"
+  >
+    <div class="flex items-center gap-4 opacity-95">
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-sm">bolt</span> Fast
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-sm">verified_user</span> Secure
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-sm">hub</span> P2P Matrix
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-rounded text-sm">dns</span> No Central Server
+      </span>
     </div>
+    <div class="text-blue-100 text-right tracking-wide text-[11px] opacity-90 font-mono">
+      ~ Made by Priyanshu Singh
+    </div>
+  </footer>
+
 
     <script>
-      // --- 1. SELF-CACHING QR LIBRARY (Prevents Offline Breakage) ---
-      async function initQR() {
-        if (window.QRious) return;
-        const cached = localStorage.getItem("qr_lib");
-        if (cached) {
-          eval(cached);
-          return;
+      // --- APP STATE & ENGINE ---
+      let wtClient = new WebTorrent();
+      const rtcTrackers = [
+        "wss://tracker.btorrent.xyz",
+        "wss://tracker.openwebtorrent.com",
+      ];
+      let knownPeers = new Map();
+      let monitorInterval = null;
+
+      // --- TRACK LIVE ENGINE STATUS LIGHT ---
+      function updateEngineLight() {
+        const dot = document.getElementById("net-status-dot");
+        const label = document.getElementById("net-status");
+
+        if (wtClient && (wtClient.torrents.length > 0 || wtClient.processing)) {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+          label.innerText = "P2P Engine Active";
+        } else {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+          label.innerText = "P2P Engine Ready";
         }
-        try {
-          const res = await fetch(
-            "https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js",
-          );
-          const code = await res.text();
-          localStorage.setItem("qr_lib", code);
-          eval(code);
-        } catch (e) {
-          alert("Please connect to internet ONCE to cache the QR system.");
-        }
       }
-      initQR();
+      updateEngineLight();
 
-      // --- 2. NATIVE COMPRESSION (Shrinks SDP to scan easily) ---
-      async function compressData(str) {
-        const stream = new Blob([str])
-          .stream()
-          .pipeThrough(new CompressionStream("deflate"));
-        const buffer = await new Response(stream).arrayBuffer();
-        let binary = "";
-        const bytes = new Uint8Array(buffer);
-        for (let i = 0; i < bytes.byteLength; i++)
-          binary += String.fromCharCode(bytes[i]);
-        return btoa(binary);
+      // --- DIAGNOSTICS LOGGER ---
+      function logMsg(message, type = "info") {
+        const container = document.getElementById("debug-logs");
+        if (!container) return;
+        const time = new Date().toLocaleTimeString("en-US", { hour12: false });
+        let color = "text-gray-300";
+        if (type === "success") color = "text-emerald-400";
+        if (type === "error") color = "text-rose-400";
+        if (type === "warn") color = "text-amber-400";
+
+        container.innerHTML += `<div><span class="text-gray-500">[${time}]</span> <span class="${color}">${message}</span></div>`;
+        container.scrollTop = container.scrollHeight;
       }
 
-      async function decompressData(base64) {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const stream = new Blob([bytes])
-          .stream()
-          .pipeThrough(new DecompressionStream("deflate"));
-        return await new Response(stream).text();
-      }
-
-      // --- 3. NATIVE P2P WEBRTC LOGIC ---
-      let peerConnection;
-      let dataChannel;
-      let fileBuffer;
-      let fileMeta;
-
-      const rtcConfig = { iceServers: [] }; // Empty = strictly local Wi-Fi only
-
-      // SENDER LOGIC
-      document
-        .getElementById("file-input")
-        .addEventListener("change", async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          document.getElementById("drop-text").innerText =
-            "Ready: " + file.name;
-
-          fileBuffer = await file.arrayBuffer();
-          fileMeta = JSON.stringify({ name: file.name, size: file.size });
-
-          peerConnection = new RTCPeerConnection(rtcConfig);
-          dataChannel = peerConnection.createDataChannel("fileTransfer");
-          dataChannel.binaryType = "arraybuffer";
-
-          dataChannel.onopen = () => sendFileChunks();
-
-          peerConnection.onicecandidate = async (e) => {
-            if (!e.candidate) {
-              // Gathering finished
-              const compressed = await compressData(
-                JSON.stringify(peerConnection.localDescription),
+      // --- SERVICE WORKER REGISTRATION ---
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then(() => {
+              logMsg(
+                "Service worker infrastructure validation complete.",
+                "success",
               );
-              document.getElementById("txt-offer").value = compressed;
-              new QRious({
-                element: document.getElementById("qr-offer"),
-                value: compressed,
-                size: 200,
-                level: "M",
-              });
-              document.getElementById("sender-ui").classList.remove("hidden");
-            }
+            })
+            .catch(() => {});
+        });
+      }
+
+      function copyToClipboard(elementId) {
+        const el = document.getElementById(elementId);
+        el.select();
+        document.execCommand("copy");
+        logMsg("Cryptographic hash pointer copied to clipboard.", "success");
+      }
+
+      async function deriveKeyFromBytes(bytes) {
+        return await window.crypto.subtle.importKey(
+          "raw",
+          bytes,
+          { name: "AES-GCM" },
+          false,
+          ["encrypt", "decrypt"],
+        );
+      }
+
+      // --- DRAG & DROP PIPELINE ---
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("file-input");
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((e) =>
+        dropZone.addEventListener(e, (ev) => ev.preventDefault()),
+      );
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length) processFile(e.target.files[0]);
+      });
+
+      async function processFile(file) {
+        document.getElementById("drop-text").innerText = `Staged: ${file.name}`;
+        document.getElementById("file-details").innerText =
+          "Executing asymmetric GCM block allocation...";
+        logMsg(
+          `Processing raw file input: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+        );
+
+        try {
+          const keyBytes = window.crypto.getRandomValues(new Uint8Array(16));
+          const cryptoKey = await deriveKeyFromBytes(keyBytes);
+
+          const reader = new FileReader();
+          reader.onload = async function (e) {
+            const fileBuffer = e.target.result;
+            const filenameBytes = new TextEncoder().encode(file.name);
+            const combinedBuffer = new Uint8Array(
+              4 + filenameBytes.length + fileBuffer.byteLength,
+            );
+            new DataView(combinedBuffer.buffer).setUint32(
+              0,
+              filenameBytes.length,
+            );
+            combinedBuffer.set(filenameBytes, 4);
+            combinedBuffer.set(
+              new Uint8Array(fileBuffer),
+              4 + filenameBytes.length,
+            );
+
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encryptedContent = await window.crypto.subtle.encrypt(
+              { name: "AES-GCM", iv: iv },
+              cryptoKey,
+              combinedBuffer,
+            );
+
+            const finalBuffer = new Uint8Array(
+              12 + encryptedContent.byteLength,
+            );
+            finalBuffer.set(iv, 0);
+            finalBuffer.set(new Uint8Array(encryptedContent), 12);
+
+            wtClient.processing = true;
+            updateEngineLight();
+            startGlobalSeeding(finalBuffer.buffer, keyBytes);
           };
-          const offer = await peerConnection.createOffer();
-          await peerConnection.setLocalDescription(offer);
+          reader.readAsArrayBuffer(file);
+        } catch (err) {
+          logMsg(`Cipher execution failure: ${err.message}`, "error");
+        }
+      }
+
+      // --- SEED SECTOR (SENDER) ---
+      function startGlobalSeeding(finalBuffer, keyBytes) {
+        if (wtClient.torrents.length > 0) cleanUpActiveTorrents();
+
+        const keyMnemonic = ethers.utils.entropyToMnemonic(keyBytes);
+        const encryptedFile = new File(
+          [new Blob([finalBuffer])],
+          "payload.enc",
+          { type: "application/octet-stream" },
+        );
+
+        wtClient.seed(encryptedFile, { announce: rtcTrackers }, (torrent) => {
+          wtClient.processing = false;
+          updateEngineLight();
+
+          document.getElementById("btn-clear-send").classList.remove("hidden");
+          document
+            .getElementById("sender-status-card")
+            .classList.remove("hidden");
+          document
+            .getElementById("sender-upload-progress")
+            .classList.remove("hidden");
+          document.getElementById("sender-state").innerText =
+            "Seeding to Matrix...";
+
+          const infoHashMnemonic = ethers.utils.entropyToMnemonic(
+            ethers.utils.arrayify("0x" + torrent.infoHash),
+          );
+          const token = `${infoHashMnemonic} ${keyMnemonic}`;
+          const shareLink = `https://${window.location.host}/?token=${encodeURIComponent(token)}`;
+
+          document.getElementById("global-share-link").value = shareLink;
+          document
+            .getElementById("global-sender-ui")
+            .classList.remove("hidden");
+
+          new QRious({
+            element: document.getElementById("global-qr-canvas"),
+            value: shareLink,
+            size: 150,
+            level: "M",
+          });
+          logMsg(
+            `Swarm injected. Metadata InfoHash computed successfully.`,
+            "success",
+          );
+
+          // Dynamic Swarm Monitor Loop
+          clearInterval(monitorInterval);
+          monitorInterval = setInterval(() => {
+            document.getElementById("tx-speed").innerText =
+              `Up: ${(torrent.uploadSpeed / 1024 / 1024).toFixed(2)} MB/s`;
+            document.getElementById("tx-total-uploaded").innerText =
+              `Sent: ${(torrent.uploaded / 1024 / 1024).toFixed(1)} MB`;
+
+            if (torrent.numPeers > 0) {
+              document.getElementById("sender-state").innerText =
+                `${torrent.numPeers} peer(s) connected`;
+              document.getElementById("sender-state").className =
+                "text-emerald-600 font-semibold";
+            } else {
+              document.getElementById("sender-state").innerText =
+                "Awaiting Peers...";
+              document.getElementById("sender-state").className =
+                "text-blue-600 font-semibold animate-pulse";
+            }
+
+            // Render active wire peers
+            const peerListContainer =
+              document.getElementById("sender-peers-list");
+            peerListContainer.innerHTML = "";
+
+            if (torrent.wires.length === 0) {
+              peerListContainer.innerHTML = `<div class="text-[11px] text-gray-400 italic">Awaiting remote connection nodes...</div>`;
+            }
+
+            torrent.wires.forEach((wire) => {
+              const pId = wire.peerId || "Unknown Remote Element";
+              if (!knownPeers.has(pId)) {
+                knownPeers.set(pId, {
+                  id: pId.substring(0, 8),
+                  uploaded: 0,
+                  speed: 0,
+                });
+                logMsg(
+                  `Established secure channel with peer handshake node [${pId.substring(0, 8)}]`,
+                  "info",
+                );
+              }
+
+              const targetPeer = knownPeers.get(pId);
+              targetPeer.uploaded = wire.uploaded || 0;
+              targetPeer.speed =
+                typeof wire.uploadSpeed === "function"
+                  ? wire.uploadSpeed()
+                  : wire.uploadSpeed || 0;
+
+              const peerRow = document.createElement("div");
+              peerRow.className =
+                "flex justify-between items-center text-[11px] bg-gray-100 px-2 py-1 rounded-md font-mono text-gray-600";
+              peerRow.innerHTML = `
+              <span>Node [${targetPeer.id}]</span>
+              <span>${(targetPeer.speed / 1024).toFixed(1)} KB/s • Out: ${(targetPeer.uploaded / 1024 / 1024).toFixed(1)}M</span>
+            `;
+              peerListContainer.appendChild(peerRow);
+            });
+          }, 1000);
+        });
+      }
+
+      // --- LEACH SECTOR (RECEIVER) ---
+      document
+        .getElementById("btn-global-fetch")
+        .addEventListener("click", async () => {
+          let inputVal = document
+            .getElementById("global-input-phrase")
+            .value.trim();
+          if (inputVal.includes("?token=")) {
+            inputVal = decodeURIComponent(inputVal.split("?token=")[1]);
+          }
+
+          const words = inputVal.split(/\s+/);
+          if (words.length !== 27)
+            return logMsg(
+              "Invalid protocol signature payload. Token verification failed.",
+              "error",
+            );
+
+          const btn = document.getElementById("btn-global-fetch");
+          document
+            .getElementById("receiver-status-card")
+            .classList.remove("hidden");
+          document.getElementById("btn-clear-rx").classList.remove("hidden");
+          btn.disabled = true;
+          btn.innerHTML =
+            '<span class="material-symbols-rounded animate-spin text-sm">sync</span> Tracking Swarm...';
+
+          try {
+            const infoHash = ethers.utils
+              .mnemonicToEntropy(words.slice(0, 15).join(" "))
+              .substring(2);
+            const cryptoKey = await deriveKeyFromBytes(
+              ethers.utils.arrayify(
+                ethers.utils.mnemonicToEntropy(words.slice(15).join(" ")),
+              ),
+            );
+
+            logMsg(
+              `Target tracking link decrypted. Locating tracker channels...`,
+            );
+            wtClient.add(infoHash, { announce: rtcTrackers }, (torrent) => {
+              logMsg(
+                "Connection vector unified with file pipeline. Transfer initiated.",
+                "success",
+              );
+              btn.innerHTML =
+                '<span class="material-symbols-rounded text-sm">downloading</span> Downloading Matrix Content';
+              updateEngineLight();
+
+              const updateInterval = setInterval(() => {
+                const progress = (torrent.progress * 100).toFixed(1);
+                document.getElementById("rx-progress").innerText =
+                  `${progress}%`;
+                document.getElementById("rx-progress-bar").style.width =
+                  `${progress}%`;
+                document.getElementById("rx-speed").innerText =
+                  `Down: ${(torrent.downloadSpeed / 1024 / 1024).toFixed(2)} MB/s`;
+                document.getElementById("rx-peers-count").innerText =
+                  `Peers: ${torrent.numPeers} connected`;
+              }, 500);
+
+              torrent.on("done", () => {
+                clearInterval(updateInterval);
+                document.getElementById("rx-progress").innerText =
+                  "Decrypting...";
+                document.getElementById("rx-status-text").innerText =
+                  "Cryptographic Core:";
+
+                torrent.files[0].getBlob(async (err, blob) => {
+                  if (err) {
+                    logMsg(
+                      "Stream assembly failure from buffer partition.",
+                      "error",
+                    );
+                    return;
+                  }
+                  await decryptAndSave(await blob.arrayBuffer(), cryptoKey);
+                  btn.innerHTML =
+                    '<span class="material-symbols-rounded text-sm">done_all</span> Payload Unlocked';
+                  updateEngineLight();
+                });
+              });
+            });
+          } catch (err) {
+            logMsg(
+              "Handshake parsing exception: Bad signature sequence.",
+              "error",
+            );
+            btn.disabled = false;
+            btn.innerText = "Initiate Download";
+          }
         });
 
-      async function connectSender() {
-        const answerStr = document.getElementById("input-answer").value;
-        const decompressed = await decompressData(answerStr);
-        await peerConnection.setRemoteDescription(
-          new RTCSessionDescription(JSON.parse(decompressed)),
-        );
-        document.getElementById("sender-ui").classList.add("hidden");
-        document.getElementById("sender-progress").classList.remove("hidden");
+      // --- AES DECIPHER EXTRACTION LAYERING ---
+      async function decryptAndSave(fullBuffer, cryptoKey) {
+        try {
+          const iv = fullBuffer.slice(0, 12);
+          const ciphertext = fullBuffer.slice(12);
+          const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(iv) },
+            cryptoKey,
+            ciphertext,
+          );
+
+          const view = new DataView(decrypted);
+          const filenameLen = view.getUint32(0);
+          const filenameBytes = new Uint8Array(decrypted, 4, filenameLen);
+          const originalFilename = new TextDecoder().decode(filenameBytes);
+          const fileBytes = new Uint8Array(decrypted, 4 + filenameLen);
+
+          const downloadUrl = URL.createObjectURL(new Blob([fileBytes]));
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = originalFilename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          document.getElementById("rx-progress").innerText = "Extracted";
+          logMsg(
+            `Decryption successful. Blob linked to storage: ${originalFilename}`,
+            "success",
+          );
+        } catch (e) {
+          logMsg(
+            "Decryption block authentication mismatched. Bad Key configuration.",
+            "error",
+          );
+        }
       }
 
-      function sendFileChunks() {
-        document.getElementById("sender-status").innerText = "Sending...";
-        dataChannel.send("META:" + fileMeta); // Send name/size first
-
-        const chunkSize = 64 * 1024; // 64KB max WebRTC packet
-        let offset = 0;
-
-        const sendChunk = () => {
-          while (offset < fileBuffer.byteLength) {
-            if (
-              dataChannel.bufferedAmount >
-              dataChannel.bufferedAmountLowThreshold
-            ) {
-              dataChannel.onbufferedamountlow = () => {
-                dataChannel.onbufferedamountlow = null;
-                sendChunk();
-              };
-              return;
-            }
-            dataChannel.send(fileBuffer.slice(offset, offset + chunkSize));
-            offset += chunkSize;
-            document.getElementById("tx-fill").style.width =
-              `${(offset / fileBuffer.byteLength) * 100}%`;
-          }
-          dataChannel.send("EOF");
-          document.getElementById("sender-status").innerText =
-            "Transfer Complete!";
-        };
-        setTimeout(sendChunk, 500);
+      // --- RESET ACTIONS ---
+      function cleanUpActiveTorrents() {
+        clearInterval(monitorInterval);
+        if (wtClient.torrents.length > 0) {
+          wtClient.torrents.forEach((t) => t.destroy());
+        }
+        knownPeers.clear();
+        updateEngineLight();
       }
 
-      // RECEIVER LOGIC
-      async function generateAnswer() {
-        const offerStr = document.getElementById("input-offer").value;
-        const decompressed = await decompressData(offerStr);
-
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        let receiveBuffer = [];
-        let totalReceived = 0;
-        let expectedSize = 0;
-        let fileName = "download";
-
-        peerConnection.ondatachannel = (e) => {
-          const receiveChannel = e.channel;
-          receiveChannel.binaryType = "arraybuffer";
-          document.getElementById("rx-step-1").classList.add("hidden");
-          document.getElementById("rx-step-2").classList.add("hidden");
-          document.getElementById("rx-progress").classList.remove("hidden");
-
-          receiveChannel.onmessage = (event) => {
-            if (typeof event.data === "string") {
-              if (event.data.startsWith("META:")) {
-                const meta = JSON.parse(event.data.split("META:")[1]);
-                fileName = meta.name;
-                expectedSize = meta.size;
-                document.getElementById("rx-status").innerText =
-                  `Receiving: ${fileName}`;
-              } else if (event.data === "EOF") {
-                document.getElementById("rx-status").innerText = "Saved!";
-                saveFile(receiveBuffer, fileName);
-              }
-            } else {
-              receiveBuffer.push(event.data);
-              totalReceived += event.data.byteLength;
-              if (expectedSize > 0) {
-                document.getElementById("rx-fill").style.width =
-                  `${(totalReceived / expectedSize) * 100}%`;
-              }
-            }
-          };
-        };
-
-        peerConnection.onicecandidate = async (e) => {
-          if (!e.candidate) {
-            const compressed = await compressData(
-              JSON.stringify(peerConnection.localDescription),
-            );
-            document.getElementById("txt-answer").value = compressed;
-            new QRious({
-              element: document.getElementById("qr-answer"),
-              value: compressed,
-              size: 200,
-              level: "M",
-            });
-            document.getElementById("rx-step-2").classList.remove("hidden");
-          }
-        };
-
-        await peerConnection.setRemoteDescription(
-          new RTCSessionDescription(JSON.parse(decompressed)),
-        );
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+      function resetSender() {
+        cleanUpActiveTorrents();
+        document.getElementById("global-sender-ui").classList.add("hidden");
+        document.getElementById("sender-status-card").classList.add("hidden");
+        document.getElementById("btn-clear-send").classList.add("hidden");
+        document.getElementById("global-share-link").value = "";
+        document.getElementById("drop-text").innerText =
+          "Drag a file here or click to browse";
+        document.getElementById("file-details").innerText =
+          "Limit: ~500MB (Browser RAM limit)";
+        document.getElementById("file-input").value = "";
+        logMsg("Sender subsystem components purged.");
       }
 
-      function saveFile(bufferArray, name) {
-        const blob = new Blob(bufferArray);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = name;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+      function resetReceiver() {
+        cleanUpActiveTorrents();
+        document.getElementById("receiver-status-card").classList.add("hidden");
+        document.getElementById("btn-clear-rx").classList.add("hidden");
+        document.getElementById("global-input-phrase").value = "";
+
+        const btn = document.getElementById("btn-global-fetch");
+        btn.disabled = false;
+        btn.innerHTML =
+          '<span class="material-symbols-rounded">cloud_download</span> Initiate Download';
+
+        document.getElementById("rx-status-text").innerText =
+          "Download Progress:";
+        document.getElementById("rx-progress").innerText = "0%";
+        document.getElementById("rx-progress-bar").style.width = "0%";
+        logMsg("Receiver subsystem components purged.");
       }
+
+      // --- AUTO INTERCEPT ENTRY LINK ---
+      window.addEventListener("load", () => {
+        const token = new URLSearchParams(window.location.search).get("token");
+        if (token) {
+          document.getElementById("global-input-phrase").value = token;
+          setTimeout(
+            () => document.getElementById("btn-global-fetch").click(),
+            800,
+          );
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      });
     </script>
   </body>
 </html>
